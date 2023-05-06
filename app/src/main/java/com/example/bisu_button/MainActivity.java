@@ -7,38 +7,102 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.Spinner;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.bisu_button.R;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Calendar;
+
 public class MainActivity extends AppCompatActivity {
 
     private Button btnConfirm;
+    private Button btnSubmitCode;
     private TextView textViewAvailability;
+    private TextView countdownTextView;
+    private CountDownTimer countDownTimer;
+    private EditText editTextReserveCode;
+    private String codeReserve = "No Data";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         btnConfirm = findViewById(R.id.btnConfirm);
+        btnConfirm.setVisibility(View.INVISIBLE);
+
+
+        // Get a reference to the node you want to check
+        DatabaseReference nodeRef = FirebaseDatabase.getInstance().getReference().child("Room").child("Room1");
+        nodeRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.child("Reserve").exists()) {
+                    Log.d(TAG, "Node exists!");
+                    // Do something if the node exists
+
+                } else {
+                    // Do something if the node doesn't exist
+                    Log.d(TAG, "Node does not exist!");
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle any errors that may occur
+                Log.e(TAG, "Error checking if node exists: " + databaseError.getMessage());
+            }
+        });
+
+        //Button that compares the code and the one on the database
+        Button btnSubmitCode = findViewById(R.id.btnSubmitCode);
+        EditText editTextReserveCode = findViewById(R.id.editTextReserveCode);
+
+        btnSubmitCode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String reserveCode = editTextReserveCode.getText().toString().trim();
+                fetchData(new OnDataFetchedListener() {
+                    @Override
+                    public void onDataFetched(String data) {
+                        if (reserveCode.equals(data)) {
+                            // code and reserveCode match, do something
+                            Log.d(TAG, "Code is a match");
+                            btnConfirm.setVisibility(View.VISIBLE);
+                            Toast.makeText(MainActivity.this, "Code Verified. Please click CONFIRM to start using the Room", Toast.LENGTH_LONG).show();
+                        } else {
+                            // code and reserveCode do not match, do something else
+                            Log.d(TAG, "Code is a mismatch");
+                            Toast.makeText(MainActivity.this, "ERROR CODE", Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onDataFetchFailed(String errorMessage) {
+                        // handle data fetch failure
+                    }
+                });
+            }
+        });
+
+
+
 
         //Set the text of Status
-
         DatabaseReference roomAvailabilityRef = FirebaseDatabase.getInstance().getReference().child("Room").child("Room1").child("Availability");
         textViewAvailability = findViewById(R.id.textViewAvailability);
 
+        //Listens for changes in the "Availability" Node
+        //Changes the Visibility of the Confirm button according to the value of Availablity node
         ValueEventListener availabilityListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -47,9 +111,11 @@ public class MainActivity extends AppCompatActivity {
                     if (availability) {
                         textViewAvailability.setText("Vacant");
                         textViewAvailability.setTextColor(Color.GREEN);
+
                     } else {
                         textViewAvailability.setText("Occupied");
                         textViewAvailability.setTextColor(Color.RED);
+                        btnConfirm.setVisibility(View.INVISIBLE);
                     }
                 }
             }
@@ -61,17 +127,14 @@ public class MainActivity extends AppCompatActivity {
         };
 
         roomAvailabilityRef.addValueEventListener(availabilityListener);
-
-
+        //User clicks the button to confirm that they will now start using the room
         btnConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 DatabaseReference roomAvailabilityRef = FirebaseDatabase.getInstance().getReference().child("Room").child("Room1").child("Availability");
-
                 roomAvailabilityRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-
 
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         Boolean availability = dataSnapshot.getValue(Boolean.class);
@@ -87,10 +150,50 @@ public class MainActivity extends AppCompatActivity {
                         Log.w(TAG, "loadPost:onCancelled", databaseError.toException());
                     }
                 });
-
-
             }
         });
 
+
+
     }
+
+    //Methods here
+
+    //fetches the ReserveCode in the Reserve Node and returns the value
+    public void fetchData(OnDataFetchedListener listener) {
+        DatabaseReference mDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Room").child("Room1").child("Reserve");
+        mDatabaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String reserveCode = (String) dataSnapshot.child("ReserveCode").getValue();
+                Log.d(TAG, "Code is: " + reserveCode);
+                listener.onDataFetched(reserveCode);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Error fetching data: " + databaseError.getMessage());
+                listener.onDataFetchFailed(databaseError.getMessage());
+            }
+        });
+    }
+
+    public interface OnDataFetchedListener {
+        void onDataFetched(String data);
+        void onDataFetchFailed(String errorMessage);
+    }
+
+
+
+
+    //Checks the code, if it is correct, then the confirm button will emerge
+    private void compareStrings() {
+
+    }
+
+
+
+
+
+
 }
