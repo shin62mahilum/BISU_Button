@@ -28,8 +28,6 @@ public class MainActivity extends AppCompatActivity {
     private Button btnConfirm;
     private Button btnSubmitCode;
     private TextView textViewAvailability;
-    private TextView countdownTextView;
-    private CountDownTimer countDownTimer;
     private EditText editTextReserveCode;
     private String codeReserve = "No Data";
 
@@ -161,11 +159,16 @@ public class MainActivity extends AppCompatActivity {
 
     //fetches the ReserveCode in the Reserve Node and returns the value
     public void fetchData(OnDataFetchedListener listener) {
-        DatabaseReference mDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Room").child("Room1").child("Reserve");
+
+        String room = "Room1"; //CHANGE THIS ACCORDING TO THE ROOM THAT YOU WANT TO SET UP
+
+        DatabaseReference mDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Room").child(room).child("Reserve");
         mDatabaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                String reserveCode = (String) dataSnapshot.child("ReserveCode").getValue();
+
+
+                String reserveCode = (String) dataSnapshot.child("Reserve1").child("ReserveCode").getValue();
                 Log.d(TAG, "Code is: " + reserveCode);
                 listener.onDataFetched(reserveCode);
             }
