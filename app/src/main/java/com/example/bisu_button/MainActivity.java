@@ -24,7 +24,6 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
-
     private Button btnConfirm;
     private Button btnSubmitCode;
     private TextView textViewAvailability;
@@ -38,8 +37,6 @@ public class MainActivity extends AppCompatActivity {
 
         btnConfirm = findViewById(R.id.btnConfirm);
         btnConfirm.setVisibility(View.INVISIBLE);
-
-
         // Get a reference to the node you want to check
         DatabaseReference nodeRef = FirebaseDatabase.getInstance().getReference().child("Room").child("Room1");
         nodeRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -83,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "ERROR CODE", Toast.LENGTH_LONG).show();
                         }
                     }
-
                     @Override
                     public void onDataFetchFailed(String errorMessage) {
                         // handle data fetch failure
@@ -91,9 +87,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-
-
-
 
         //Set the text of Status
         DatabaseReference roomAvailabilityRef = FirebaseDatabase.getInstance().getReference().child("Room").child("Room1").child("Availability");
@@ -109,10 +102,11 @@ public class MainActivity extends AppCompatActivity {
                     if (availability) {
                         textViewAvailability.setText("Vacant");
                         textViewAvailability.setTextColor(Color.GREEN);
-
+                        btnSubmitCode.setVisibility(View.VISIBLE);
                     } else {
                         textViewAvailability.setText("Occupied");
                         textViewAvailability.setTextColor(Color.RED);
+                        btnSubmitCode.setVisibility(View.INVISIBLE);
                         btnConfirm.setVisibility(View.INVISIBLE);
                     }
                 }
@@ -129,11 +123,9 @@ public class MainActivity extends AppCompatActivity {
         btnConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 DatabaseReference roomAvailabilityRef = FirebaseDatabase.getInstance().getReference().child("Room").child("Room1").child("Availability");
                 roomAvailabilityRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         Boolean availability = dataSnapshot.getValue(Boolean.class);
                         if (availability == null) {
@@ -150,13 +142,8 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-
-
-
     }
-
     //Methods here
-
     //fetches the ReserveCode in the Reserve Node and returns the value
     public void fetchData(OnDataFetchedListener listener) {
 
@@ -165,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
         DatabaseReference mDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Room").child(room).child("Reserve");
         mDatabaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(DataSnapshot   dataSnapshot) {
 
 
                 String reserveCode = (String) dataSnapshot.child("Reserve1").child("ReserveCode").getValue();
@@ -186,17 +173,8 @@ public class MainActivity extends AppCompatActivity {
         void onDataFetchFailed(String errorMessage);
     }
 
-
-
-
     //Checks the code, if it is correct, then the confirm button will emerge
     private void compareStrings() {
 
     }
-
-
-
-
-
-
 }
